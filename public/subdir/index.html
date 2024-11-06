@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cloudflare Pages early hints: base href issue minimal reproduction</title>
+    <link rel="modulepreload" href="module.js">
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 55ch;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+<h1>Cloudflare Pages early hints: <code>&lt;base href&gt;</code> issue minimal reproduction</h1>
+
+<p>
+    This site has a <code>&lt;link rel="modulepreload"&gt;</code> element in its <code>&lt;head&gt;</code> element.
+    Instructing to preload the <code>module.js</code> file. Given the <code>&lt;base href="/"&gt;</code> element, the
+    browser properly preloads <code>/module.js</code> file. And not <code>/subdir/module.js</code>
+</p>
+
+<p>
+    Thanks to
+    <a href="https://developers.cloudflare.com/pages/configuration/early-hints/#2-automatic-link-header-generation">
+    Automatic <code>Link</code> header generation</a>, Cloudflare servers respond with
+    <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Link"><code>Link</code> response headers</a>
+    when serving this page after reading those. So the file can be preloaded earlier.
+</p>
+
+<p>
+    However, the <b>generated <code>Link</code> response header does not take into account the
+    <code>&lt;base href="/"&gt;</code> element. And the preloaded file is <code>/subdir/module.js</code></b>.
+    Which doesn't exist. Seems that <code>&lt;base&gt;</code> element is not taken into account to resolve links and
+    later generate the <code>Link</code> header with them. But it should. In order to properly generate the
+    automatic <code>Link</code> headers. Then, the browser preloads the proper one when reaching the
+    <code>&lt;link&gt;</code> element.
+</p>
+
+<p>
+    Inspect the network requests to check that <code>/subdir/module.js</code> is wrongfully being preloaded.
+    Beware that the response will be <code>200 OK</code> and not <code>404 Not found</code>. Given that
+    <a href="https://developers.cloudflare.com/pages/configuration/serving-pages/#single-page-application-spa-rendering">
+       Cloudflare Pages matches all incoming paths to the root (<code>/</code>)
+    </a> to allow single-page applications (SPA) capture and process all routes.
+</p>
+
+</body>
+</html>
